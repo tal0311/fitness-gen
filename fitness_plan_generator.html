@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Personal Fitness Plan Generator | Hybrid Strength & Endurance</title>
+<meta property="og:title" content="Personal Fitness Plan Generator | Hybrid Strength & Endurance" />
+<meta property="og:description" content="Generate a customized hybrid fitness plan combining strength training and running workouts. Input your fitness test results and get a personalized weekly plan." />
+<meta property="og:type" content="website" />
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0f0f0;
+    --muted: #888;
+    --accent: #c8f542;
+    --accent2: #4af0a0;
+    --danger: #ff6b6b;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  body.light {
+    --bg: #f5f5f0;
+    --surface: #ffffff;
+    --surface2: #f0f0ea;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.14);
+    --text: #111111;
+    --muted: #666666;
+    --accent: #1a6fd4;
+    --accent2: #0a4fa0;
+    --danger: #cc3333;
+  }
+
+  body.light .badge-a { background: rgba(26, 111, 212, 0.1); color: #1a6fd4; }
+  body.light .badge-b { background: rgba(10, 79, 160, 0.1); color: #0a4fa0; }
+  body.light .btn { color: #ffffff; }
+  body.light select option { background: #ffffff; color: #111; }
+  body.light input, body.light select { background: #f5f5f5; border-color: rgba(0,0,0,0.15); color: #111; }
+
+  body {
+    font-family: 'Heebo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+    direction: rtl;
+  }
+
+  .page { max-width: 720px; margin: 0 auto; }
+
+  header { margin-bottom: 2.5rem; }
+  header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+  header h1 span { color: var(--accent); }
+  header p { font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+  }
+
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  input, select {
+    width: 100%;
+    background: var(--surface2);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'Heebo', sans-serif;
+    font-size: 14px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    direction: rtl;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--muted); }
+  select option { background: #1e1e1e; }
+
+  .btn {
+    width: 100%;
+    background: var(--accent);
+    color: #0d0d0d;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Heebo', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 13px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    margin-top: 0.5rem;
+  }
+  .btn:hover { opacity: 0.9; }
+  .btn:active { transform: scale(0.99); }
+
+  #output { display: none; margin-top: 1.5rem; }
+
+  .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .metric {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+  }
+  .metric-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .metric-val { font-size: 20px; font-weight: 700; color: var(--accent); }
+
+  .week-card { margin-bottom: 1rem; }
+  .week-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+  .week-title { font-size: 16px; font-weight: 700; }
+  .badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .badge-a { background: rgba(var(--accent-rgb, 200, 245, 66), 0.12); color: var(--accent); }
+  .badge-b { background: rgba(var(--accent2-rgb, 74, 240, 160), 0.12); color: var(--accent2); }
+
+  .day-row {
+    display: flex;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 0.5px solid var(--border);
+    align-items: flex-start;
+  }
+  .day-row:last-child { border-bottom: none; }
+  .day-name {
+    min-width: 22px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    padding-top: 1px;
+  }
+  .day-body { flex: 1; }
+  .day-title { font-size: 14px; font-weight: 500; color: var(--text); }
+  .day-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  .ex-list { margin-top: 8px; }
+  .ex-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+    font-size: 13px;
+  }
+  .ex-name { color: var(--text); font-weight: 500; }
+  .ex-detail { color: var(--muted); font-size: 12px; text-align: left; }
+  .ex-prog { font-size: 11px; color: var(--accent); opacity: 0.7; margin-top: 1px; }
+
+  .bonus-divider {
+    border: none;
+    border-top: 0.5px dashed var(--border2);
+    margin: 10px 0 6px;
+  }
+  .bonus-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+
+  .prog-row {
+    display: flex;
+    gap: 14px;
+    padding: 8px 0;
+    border-bottom: 0.5px solid var(--border);
+    font-size: 13px;
+    align-items: center;
+  }
+  .prog-row:last-child { border-bottom: none; }
+  .prog-key { min-width: 160px; color: var(--muted); }
+  .prog-val { color: var(--text); }
+  .prog-val .arrow { color: var(--accent); margin: 0 4px; }
+
+  .injury-note { color: var(--danger); }
+
+  .wtype-btn {
+    background: var(--surface);
+    color: var(--text);
+    border: 0.5px solid var(--border2);
+    border-radius: 8px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 13px;
+    padding: 9px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .wtype-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .wtype-btn.selected { background: var(--accent); color: var(--surface); border-color: var(--accent); font-weight: 700; }
+
+  @media (max-width: 500px) {
+    .grid3 { grid-template-columns: 1fr 1fr; }
+    .metrics-grid { grid-template-columns: 1fr 1fr; }
+    .prog-key { min-width: 120px; font-size: 12px; }
+  }
+
+  .btn-print {
+    width: 100%;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    font-family: 'Heebo', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 11px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    margin-top: 0.75rem;
+    display: none;
+  }
+  .btn-print:hover { background: var(--accent); color: #0d0d0d; }
+
+  @media print {
+    body {
+      background: #fff !important;
+      color: #111 !important;
+      padding: 1rem !important;
+      direction: rtl;
+    }
+    :root {
+      --bg: #fff;
+      --surface: #fff;
+      --surface2: #f5f5f5;
+      --border: #ddd;
+      --border2: #ccc;
+      --text: #111;
+      --muted: #555;
+      --accent: #4a7c00;
+      --accent2: #006b45;
+      --danger: #cc0000;
+    }
+    .card { border: 1px solid #ccc !important; page-break-inside: avoid; margin-bottom: 0.75rem; }
+    .btn, .btn-print, header p { display: none !important; }
+    #output { display: block !important; }
+    .metric-val { color: #4a7c00 !important; }
+    .badge-a { background: #eef5d0 !important; color: #4a7c00 !important; }
+    .badge-b { background: #d0f5e8 !important; color: #006b45 !important; }
+    .ex-prog { color: #6a9a00 !important; }
+    .prog-val .arrow { color: #4a7c00 !important; }
+    .week-card { page-break-before: auto; }
+    header h1 span { color: #4a7c00 !important; }
+    input, select { border: none !important; background: transparent !important; color: #111 !important; padding: 0 !important; font-size: 13px !important; }
+    .field label { display: none; }
+    .grid3, .grid2 { display: none; }
+    .section-label { color: #333 !important; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <h1>מחולל תכנית <span>כושר אישית</span></h1>
+      <p>הזן נתונים וקבל תכנית היברידית מותאמת — כוח + סבולת</p>
+    </div>
+    <button id="theme-btn" onclick="toggleTheme()" style="background:transparent; border:0.5px solid var(--border2); border-radius:8px; color:var(--muted); font-family:'Heebo',sans-serif; font-size:13px; padding:7px 12px; cursor:pointer; white-space:nowrap; margin-top:4px; transition:color 0.15s, border-color 0.15s;">☀ בהיר</button>
+  </header>
+
+  <div id="restore-banner" style="display:none; margin-bottom:1rem; background:var(--surface2); border:0.5px solid var(--accent); border-radius:10px; padding:14px 16px;">
+    <p style="font-size:13px; color:var(--accent); font-weight:500; margin:0 0 10px">תכניות שמורות</p>
+    <div id="saved-plans-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;"></div>
+    <button onclick="document.getElementById('restore-banner').style.display='none'" style="width:100%; background:transparent; color:var(--muted); border:0.5px solid var(--border2); border-radius:8px; font-family:'Heebo',sans-serif; font-size:13px; padding:9px; cursor:pointer;">תכנית חדשה</button>
+  </div>
+
+  <div id="user-card" class="card" style="display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-size:15px; font-weight:700; color:var(--text)" id="user-display-name">—</div>
+        <div style="font-size:12px; color:var(--muted); margin-top:2px">מ"א: <span id="user-display-id">—</span></div>
+      </div>
+      <button onclick="editUser()" style="background:transparent; color:var(--muted); border:0.5px solid var(--border2); border-radius:8px; font-family:'Heebo',sans-serif; font-size:12px; padding:6px 12px; cursor:pointer;">שנה</button>
+    </div>
+  </div>
+
+  <div id="user-form-card" class="card">
+    <div class="section-label">פרטי משתמש</div>
+    <div style="font-size:11px; color:var(--muted); margin-bottom:10px;">נדרש לדיווח אימונים לגיליון</div>
+    <div class="grid2">
+      <div class="field"><label>שם מלא</label><input type="text" id="user-name" placeholder="ישראל ישראלי" /></div>
+      <div class="field"><label>מספר אישי</label><input type="text" id="user-id" placeholder="12345" /></div>
+    </div>
+    <button onclick="saveUser()" style="width:100%; margin-top:10px; background:var(--accent); color:var(--surface); border:none; border-radius:8px; font-family:'Heebo',sans-serif; font-size:13px; font-weight:700; padding:9px; cursor:pointer;">שמור פרטים</button>
+  </div>
+
+  <div class="card">
+    <div class="section-label">פרטי מתאמן</div>
+    <div class="grid3">
+      <div class="field"><label>גיל</label><input type="number" id="age" min="16" max="60" placeholder="25" /></div>
+      <div class="field"><label>מין</label>
+        <select id="gender">
+          <option value="m">זכר</option>
+          <option value="f">נקבה</option>
+        </select>
+      </div>
+      <div class="field"><label>משקל (ק"ג)</label><input type="number" id="weight" min="40" max="140" placeholder="75" /></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">מבחני כושר</div>
+    <div class="grid3">
+      <div class="field"><label>ריצת 2000 מטר (דק:שנ)</label><input type="text" id="run2000" placeholder="10:20" /></div>
+      <div class="field"><label>מקסימום משיכות</label><input type="number" id="pullups" min="0" max="50" placeholder="8" /></div>
+      <div class="field"><label>מקסימום שכיבות שמיכה</label><input type="number" id="pushups" min="0" max="100" placeholder="30" /></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">רמה וצרכים</div>
+    <div class="grid2">
+      <div class="field"><label>רמת ניסיון</label>
+        <select id="level">
+          <option value="beginner">מתחיל (0–6 חודשים)</option>
+          <option value="intermediate" selected>בינוני (6–24 חודשים)</option>
+          <option value="advanced">מתקדם (2+ שנים)</option>
+        </select>
+      </div>
+      <div class="field"><label>מגבלות / פציעות</label><input type="text" id="injuries" placeholder="אין" /></div>
+    </div>
+  </div>
+
+  <button class="btn" onclick="generate()">צור תכנית אישית</button>
+
+  <div id="output">
+
+    <div class="card" id="metrics-card">
+      <div class="section-label">ערכי בסיס</div>
+      <div class="metrics-grid">
+        <div class="metric"><div class="metric-label">קצב בסיס</div><div class="metric-val" id="m-base">—</div></div>
+        <div class="metric"><div class="metric-label">אינטרוולים</div><div class="metric-val" id="m-interval">—</div></div>
+        <div class="metric"><div class="metric-label">טמפו</div><div class="metric-val" id="m-tempo">—</div></div>
+        <div class="metric"><div class="metric-label">נפח קל</div><div class="metric-val" id="m-easy">—</div></div>
+        <div class="metric"><div class="metric-label">סטים דחיפות</div><div class="metric-val" id="m-push">—</div></div>
+        <div class="metric"><div class="metric-label">סטים משיכות</div><div class="metric-val" id="m-pull">—</div></div>
+      </div>
+    </div>
+
+    <div class="card week-card">
+      <div class="week-header">
+        <span class="week-title">שבוע A</span>
+        <span class="badge badge-a">עצימות</span>
+      </div>
+      <div id="week-a"></div>
+    </div>
+
+    <div class="card week-card">
+      <div class="week-header">
+        <span class="week-title">שבוע B</span>
+        <span class="badge badge-b">נפח</span>
+      </div>
+      <div id="week-b"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">התקדמות אחרי 4 שבועות</div>
+      <div id="progression"></div>
+    </div>
+
+    <button id="save-btn" onclick="savePlan()" style="width:100%; margin-top:0.5rem; background:transparent; color:var(--accent); border:1px solid var(--accent); border-radius:10px; font-family:'Heebo',sans-serif; font-size:14px; font-weight:600; padding:12px; cursor:pointer; transition:background 0.15s, color 0.15s;">שמור תכנית</button>
+    <button onclick="addToCalendar()" style="width:100%; margin-top:0.5rem; background:transparent; color:#888; border:0.5px solid #333; border-radius:10px; font-family:'Heebo',sans-serif; font-size:14px; font-weight:500; padding:12px; cursor:pointer; transition:color 0.15s, border-color 0.15s;" onmouseover="this.style.color='#fff';this.style.borderColor='#666'" onmouseout="this.style.color='#888';this.style.borderColor='#333'">הוסף אימונים לגוגל קלנדר</button>
+
+    <div id="calendar-panel" style="display:none; margin-top:0.75rem; background:#161616; border:0.5px solid #333; border-radius:10px; padding:14px 16px;">
+      <p style="font-size:12px; color:#888; margin:0 0 10px">בחר יום התחלה ושעת אימון — ייווצרו 7 אירועים (שבוע A)</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+        <div><label style="font-size:12px; color:#888; display:block; margin-bottom:4px">תאריך התחלה</label><input type="date" id="cal-start" style="width:100%; background:#1e1e1e; border:0.5px solid #333; border-radius:8px; color:#f0f0f0; font-family:'Heebo',sans-serif; font-size:13px; padding:8px 10px;" /></div>
+        <div><label style="font-size:12px; color:#888; display:block; margin-bottom:4px">שעת אימון</label><input type="time" id="cal-time" value="07:00" style="width:100%; background:#1e1e1e; border:0.5px solid #333; border-radius:8px; color:#f0f0f0; font-family:'Heebo',sans-serif; font-size:13px; padding:8px 10px;" /></div>
+      </div>
+      <div id="cal-links" style="display:flex; flex-direction:column; gap:6px;"></div>
+    </div>
+
+    <button onclick="toggleReportPanel()" style="width:100%; margin-top:0.5rem; background:transparent; color:var(--muted); border:0.5px solid var(--border2); border-radius:10px; font-family:'Heebo',sans-serif; font-size:14px; font-weight:500; padding:12px; cursor:pointer;">דווח על אימון</button>
+
+    <div id="report-panel" style="display:none; margin-top:0.75rem; background:var(--surface2); border:0.5px solid var(--border2); border-radius:10px; padding:14px 16px;">
+      <p style="font-size:12px; color:var(--muted); margin:0 0 12px">בחר את האימון שביצעת היום</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;" id="workout-type-btns">
+        <button onclick="selectWorkout(this,'דחיפות')" class="wtype-btn">דחיפות</button>
+        <button onclick="selectWorkout(this,'משיכות')" class="wtype-btn">משיכות</button>
+        <button onclick="selectWorkout(this,'רגליים')" class="wtype-btn">רגליים</button>
+        <button onclick="selectWorkout(this,'אינטרוולים קצרים')" class="wtype-btn">אינטרוולים קצרים</button>
+        <button onclick="selectWorkout(this,'אינטרוולים ארוכים')" class="wtype-btn">אינטרוולים ארוכים</button>
+        <button onclick="selectWorkout(this,'טמפו')" class="wtype-btn">טמפו</button>
+        <button onclick="selectWorkout(this,'נפח קל')" class="wtype-btn">נפח קל</button>
+      </div>
+      <button id="submit-report-btn" onclick="submitReport()" style="width:100%; background:var(--accent); color:var(--surface); border:none; border-radius:8px; font-family:'Heebo',sans-serif; font-size:14px; font-weight:700; padding:11px; cursor:pointer; opacity:0.4; pointer-events:none;">שלח דיווח</button>
+      <div id="report-status" style="font-size:12px; text-align:center; margin-top:8px; min-height:18px;"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function toggleReportPanel() {
+  const panel = document.getElementById('report-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  window._selectedWorkout = null;
+  document.querySelectorAll('.wtype-btn').forEach(b => b.classList.remove('selected'));
+  const submitBtn = document.getElementById('submit-report-btn');
+  submitBtn.style.opacity = '0.4';
+  submitBtn.style.pointerEvents = 'none';
+  document.getElementById('report-status').textContent = '';
+}
+
+function selectWorkout(btn, type) {
+  document.querySelectorAll('.wtype-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  window._selectedWorkout = type;
+  const submitBtn = document.getElementById('submit-report-btn');
+  submitBtn.style.opacity = '1';
+  submitBtn.style.pointerEvents = 'auto';
+}
+
+async function submitReport() {
+  const name = document.getElementById('user-name').value.trim();
+  const id = document.getElementById('user-id').value.trim();
+  const url = SCRIPT_URL;
+  const workout = window._selectedWorkout;
+
+  const status = document.getElementById('report-status');
+
+  if (!name || !id) { status.style.color = 'var(--danger)'; status.textContent = 'יש למלא שם ומספר אישי'; return; }
+  if (!url || url.includes('YOUR_SCRIPT_ID')) { status.style.color = 'var(--danger)'; status.textContent = 'כתובת ה-Web App לא הוגדרה'; return; }
+  if (!workout) return;
+
+  const btn = document.getElementById('submit-report-btn');
+  btn.textContent = 'שולח...';
+  btn.style.opacity = '0.7';
+  status.textContent = '';
+
+  try {
+    const params = new URLSearchParams({ name, id, workout });
+    new Image().src = SCRIPT_URL + '?' + params.toString();
+    status.style.color = 'var(--accent)';
+    status.textContent = 'האימון דווח בהצלחה!';
+    btn.textContent = 'שלח דיווח';
+    btn.style.opacity = '1';
+    localStorage.setItem('user_name', name);
+    localStorage.setItem('user_id', id);
+  } catch (err) {
+    status.style.color = 'var(--danger)';
+    status.textContent = 'שגיאה בשליחה — בדוק חיבור לאינטרנט';
+    btn.textContent = 'שלח דיווח';
+    btn.style.opacity = '1';
+  }
+}
+
+function saveUser() {
+  const name = document.getElementById('user-name').value.trim();
+  const id = document.getElementById('user-id').value.trim();
+  if (!name || !id) return;
+  localStorage.setItem('user_name', name);
+  localStorage.setItem('user_id', id);
+  showUserCard(name, id);
+}
+
+function showUserCard(name, id) {
+  document.getElementById('user-display-name').textContent = name;
+  document.getElementById('user-display-id').textContent = id;
+  document.getElementById('user-card').style.display = 'block';
+  document.getElementById('user-form-card').style.display = 'none';
+}
+
+function editUser() {
+  document.getElementById('user-card').style.display = 'none';
+  document.getElementById('user-form-card').style.display = 'block';
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('theme-btn').textContent = isLight ? '🌙 כהה' : '☀ בהיר';
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+
+// *** הכנס כאן את כתובת ה-Web App שלך ***
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzMfEfGWdxxKT1MOu3fRlSdyA362MwYilhxd5y8enSjWRUiyFRBpeFkVCXB5HVaGO1Z/exec';
+
+function parseTime(str) {
+  const parts = str.trim().split(':');
+  if (parts.length !== 2) return null;
+  const m = parseInt(parts[0]), s = parseInt(parts[1]);
+  if (isNaN(m) || isNaN(s)) return null;
+  return m * 60 + s;
+}
+function secsToMin(secs) {
+  const m = Math.floor(secs / 60);
+  const s = Math.round(secs % 60);
+  return m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+const YT = {
+  'HSPU': 'handstand push up progression beginner',
+  'מקבילים': 'parallel bar dips progression beginner',
+  'שכיבות שמיכה': 'push up progression beginner',
+  'L-sit': 'L-sit progression beginner',
+  'עליות תאומים': 'calf raises progression',
+  'מתח': 'pull up progression beginner',
+  'חתירות': 'bodyweight rows progression beginner',
+  'קטלבל סווינג / ספסל רומי': 'kettlebell swing progression beginner',
+  'תלייה על מתח': 'dead hang progression grip strength',
+  'סקוואט / פיסטול': 'pistol squat progression beginner',
+  'לאנג\'': 'lunge progression beginner',
+  'גלגל בטן / פלאנק': 'ab wheel rollout progression beginner',
+};
+
+function ytLink(name) {
+  const q = YT[name] || name + ' exercise progression beginner';
+  const url = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
+  return `<a href="${url}" target="_blank" title="צפה בסרטון הדגמה" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:#ff0000;border-radius:3px;text-decoration:none;flex-shrink:0;margin-right:4px;font-size:9px;color:#fff;font-weight:700;">▶</a>`;
+}
+
+function exItem(name, sets, reps, note, prog) {
+  return `<div class="ex-item">
+    <div style="display:flex;align-items:flex-start;gap:4px;">
+      ${ytLink(name)}
+      <div><div class="ex-name">${name}</div>${prog ? '<div class="ex-prog">↑ ' + prog + '</div>' : ''}</div>
+    </div>
+    <div class="ex-detail">${sets}×${reps}${note ? ' | ' + note : ''}</div>
+  </div>`;
+}
+
+function pushDay(reps) {
+  return `<div class="day-title">דחיפות</div>
+  <div class="ex-list">
+    ${exItem('HSPU', 2, reps, 'ראש לרצפה', 'כשמגיע ל-12 → צמצם מנוחה / רינגים')}
+    ${exItem('מקבילים', 2, reps, 'ROM מלא', 'כשמגיע ל-12 → הוסף משקל / טבעות')}
+    ${exItem('שכיבות שמיכה', 2, reps, '', 'כשמגיע ל-12 → הגבה רגליים')}
+  </div>
+  <hr class="bonus-divider" />
+  <div class="bonus-label">בונוס — אם נשאר זמן</div>
+  <div class="ex-list">
+    ${exItem('L-sit', '2–3', 'החזקה', 'מקבילים', 'מ-5 שנ׳ → 30 שנ׳ → רגל אחת → מלא')}
+    ${exItem('עליות תאומים', 2, '20–30', '', 'כשמגיע ל-30 → עקב מונמך')}
+  </div>`;
+}
+
+function pullDay(reps) {
+  return `<div class="day-title">משיכות</div>
+  <div class="ex-list">
+    ${exItem('מתח', 2, reps, 'ROM מלא', 'כשמגיע ל-12 → הוסף משקל')}
+    ${exItem('חתירות', 2, reps, 'מתח / טבעות', 'כשמגיע ל-12 → הוסף זווית / משקל')}
+    ${exItem('קטלבל סווינג / ספסל רומי', 2, reps, '', 'כשמגיע ל-12 → הוסף משקל')}
+  </div>
+  <hr class="bonus-divider" />
+  <div class="bonus-label">בונוס — אם נשאר זמן</div>
+  <div class="ex-list">
+    ${exItem('תלייה על מתח', '2–3', 'החזקה', '', 'מ-10 שנ׳ → 30 שנ׳ → יד אחת')}
+    ${exItem('עליות תאומים', 2, '20–30', '', 'כשמגיע ל-30 → עקב מונמך')}
+  </div>`;
+}
+
+function legsDay() {
+  return `<div class="day-title">רגליים</div>
+  <div class="ex-list">
+    ${exItem('סקוואט / פיסטול', 2, '8–12', '', 'כשמגיע ל-12 → הוסף משקל / פיסטול')}
+    ${exItem('לאנג\'', 2, '8–12 לכל רגל', '', 'כשמגיע ל-12 → Bulgarian / משקל')}
+    ${exItem('גלגל בטן / פלאנק', 2, '8–12 / 30 שנ\'', '', 'כשמגיע ל-12 → הרחק / הוסף זמן')}
+  </div>`;
+}
+
+function dayRow(name, content) {
+  return `<div class="day-row"><div class="day-name">${name}</div><div class="day-body">${content}</div></div>`;
+}
+
+function restDay() { return `<div class="day-title" style="color:var(--muted)">מנוחה</div>`; }
+
+function generate() {
+  const runStr = document.getElementById('run2000').value;
+  const pullups = parseInt(document.getElementById('pullups').value) || 0;
+  const pushups = parseInt(document.getElementById('pushups').value) || 0;
+  const level = document.getElementById('level').value;
+  const injuries = document.getElementById('injuries').value || 'אין';
+
+  const runSecs = parseTime(runStr);
+  if (!runSecs) { alert('יש להזין זמן ריצה בפורמט דקות:שניות — לדוגמה 10:20'); return; }
+
+  const basePace = runSecs / 2;
+  const intervalPace = basePace * 0.94;
+  const tempoPace = basePace * 1.12;
+  const easyPace = basePace * 1.32;
+
+  const lv = {
+    beginner:     { shortInt: '200', shortReps: 6,  longInt: '600',  longReps: 3, tempoMin: 12, easyMin: 20, reps: '6–8' },
+    intermediate: { shortInt: '300', shortReps: 8,  longInt: '800',  longReps: 3, tempoMin: 15, easyMin: 30, reps: '8–10' },
+    advanced:     { shortInt: '400', shortReps: 6,  longInt: '1000', longReps: 3, tempoMin: 20, easyMin: 40, reps: '10–12' }
+  }[level];
+
+  document.getElementById('m-base').textContent = secsToMin(basePace) + '/ק"מ';
+  document.getElementById('m-interval').textContent = secsToMin(intervalPace) + '/ק"מ';
+  document.getElementById('m-tempo').textContent = secsToMin(tempoPace) + '/ק"מ';
+  document.getElementById('m-easy').textContent = secsToMin(easyPace) + '/ק"מ';
+  document.getElementById('m-push').textContent = '2×' + lv.reps;
+  document.getElementById('m-pull').textContent = '2×' + lv.reps;
+
+  const shortDetail = `${lv.shortInt}×${lv.shortReps} @ ${secsToMin(intervalPace)}/ק"מ | מנוחה 90 שנ'`;
+  const longDetail  = `${lv.longInt}×${lv.longReps} @ ${secsToMin(intervalPace * 1.03)}/ק"מ | מנוחה 2 דקות`;
+  const tempoDetail = `${lv.tempoMin} דקות @ ${secsToMin(tempoPace)}/ק"מ`;
+  const easyDetail  = `${lv.easyMin} דקות @ ${secsToMin(easyPace)}/ק"מ`;
+
+  document.getElementById('week-a').innerHTML =
+    dayRow('א', pushDay(lv.reps)) +
+    dayRow('ב', `<div class="day-title">אינטרוולים קצרים</div><div class="day-sub">${shortDetail}</div>`) +
+    dayRow('ג', restDay()) +
+    dayRow('ד', pullDay(lv.reps)) +
+    dayRow('ה', `<div class="day-title">טמפו</div><div class="day-sub">${tempoDetail}</div>`) +
+    dayRow('ו', legsDay()) +
+    dayRow('ש', restDay());
+
+  document.getElementById('week-b').innerHTML =
+    dayRow('א', pushDay(lv.reps)) +
+    dayRow('ב', `<div class="day-title">אינטרוולים ארוכים</div><div class="day-sub">${longDetail}</div>`) +
+    dayRow('ג', restDay()) +
+    dayRow('ד', pullDay(lv.reps)) +
+    dayRow('ה', `<div class="day-title">נפח קל</div><div class="day-sub">${easyDetail}</div>`) +
+    dayRow('ו', legsDay()) +
+    dayRow('ש', restDay());
+
+  const nextLong = parseInt(lv.longInt) + (level === 'beginner' ? 100 : 200);
+
+  let progHTML = `
+    <div class="prog-row"><div class="prog-key">אינטרוולים קצרים</div><div class="prog-val">${lv.shortInt}×${lv.shortReps} <span class="arrow">→</span> ${lv.shortInt}×${lv.shortReps + 2}</div></div>
+    <div class="prog-row"><div class="prog-key">אינטרוולים ארוכים</div><div class="prog-val">${lv.longInt}×${lv.longReps} <span class="arrow">→</span> ${nextLong}×${lv.longReps}</div></div>
+    <div class="prog-row"><div class="prog-key">טמפו</div><div class="prog-val">${lv.tempoMin} דקות <span class="arrow">→</span> ${lv.tempoMin + 3} דקות</div></div>
+    <div class="prog-row"><div class="prog-key">נפח קל</div><div class="prog-val">${lv.easyMin} דקות <span class="arrow">→</span> ${lv.easyMin + 5} דקות</div></div>
+    <div class="prog-row"><div class="prog-key">כוח (double progression)</div><div class="prog-val">כשמגיע ל-12 חזרות → מעלה עומס / קושי</div></div>
+    <div class="prog-row"><div class="prog-key">תלייה + L-sit</div><div class="prog-val">מטרה 30 שנ׳ <span class="arrow">→</span> עולה רמה</div></div>
+  `;
+  if (injuries && injuries !== 'אין') {
+    progHTML += `<div class="prog-row"><div class="prog-key injury-note">שים לב</div><div class="prog-val injury-note">מגבלה: ${injuries}</div></div>`;
+  }
+  document.getElementById('progression').innerHTML = progHTML;
+
+  document.getElementById('output').style.display = 'block';
+  document.getElementById('output').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  window._planData = { lv, basePace, intervalPace, tempoPace, easyPace, level, injuries,
+    shortDetail, longDetail, tempoDetail, easyDetail,
+    formData: { run2000: document.getElementById('run2000').value,
+      pullups: document.getElementById('pullups').value,
+      pushups: document.getElementById('pushups').value,
+      age: document.getElementById('age').value,
+      gender: document.getElementById('gender').value,
+      weight: document.getElementById('weight').value,
+      level, injuries }
+  };
+}
+
+function addToCalendar() {
+  const panel = document.getElementById('calendar-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  if (panel.style.display === 'block') {
+    const today = new Date();
+    document.getElementById('cal-start').value = today.toISOString().split('T')[0];
+    renderCalLinks();
+  }
+}
+
+document.addEventListener('change', e => {
+  if (e.target.id === 'cal-start' || e.target.id === 'cal-time') renderCalLinks();
+});
+
+function renderCalLinks() {
+  const d = window._planData;
+  if (!d) return;
+  const startVal = document.getElementById('cal-start').value;
+  const timeVal = document.getElementById('cal-time').value || '07:00';
+  if (!startVal) return;
+
+  const [h, m] = timeVal.split(':').map(Number);
+  const weekdays = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
+  const schedule = [
+    { day: 0, name: 'דחיפות', desc: `HSPU + מקבילים + שכיבות שמיכה | 2×${d.lv.reps}\nבונוס: L-sit + עליות תאומים` },
+    { day: 1, name: 'אינטרוולים קצרים', desc: d.shortDetail },
+    { day: 2, name: 'מנוחה', skip: true },
+    { day: 3, name: 'משיכות', desc: `מתח + חתירות + קטלבל | 2×${d.lv.reps}\nבונוס: תלייה + עליות תאומים` },
+    { day: 4, name: 'טמפו', desc: d.tempoDetail },
+    { day: 5, name: 'רגליים', desc: `סקוואט + לאנג׳ + גלגל בטן | 2×8–12` },
+    { day: 6, name: 'מנוחה', skip: true },
+  ];
+
+  const links = document.getElementById('cal-links');
+  links.innerHTML = '';
+
+  schedule.forEach(item => {
+    if (item.skip) return;
+    const date = new Date(startVal);
+    date.setDate(date.getDate() + item.day);
+    const y = date.getFullYear();
+    const mo = String(date.getMonth() + 1).padStart(2, '0');
+    const dy = String(date.getDate()).padStart(2, '0');
+    const hh = String(h).padStart(2, '0');
+    const mm = String(m).padStart(2, '0');
+    const endH = String(h + 1).padStart(2, '0');
+
+    const start = `${y}${mo}${dy}T${hh}${mm}00`;
+    const end = `${y}${mo}${dy}T${endH}${mm}00`;
+    const title = encodeURIComponent(`אימון ${item.name}`);
+    const details = encodeURIComponent(item.desc || '');
+    const dayName = weekdays[date.getDay()];
+
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}&recur=RRULE:FREQ=WEEKLY`;
+
+    links.innerHTML += `<a href="${url}" target="_blank" style="display:flex; justify-content:space-between; align-items:center; background:var(--surface2); border:0.5px solid var(--accent); border-radius:8px; padding:9px 12px; text-decoration:none;">
+      <span style="font-size:13px; font-weight:600; color:var(--accent)">${item.name}</span>
+      <span style="font-size:11px; color:var(--muted)">יום ${dayName} ${dy}/${mo} +</span>
+    </a>`;
+  });
+}
+
+function getPlans() {
+  try { return JSON.parse(localStorage.getItem('fitness_plans') || '[]'); } catch { return []; }
+}
+
+function savePlan() {
+  if (!window._planData) return;
+  const plans = getPlans();
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  const timeStr = now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+  const entry = { ...window._planData, savedAt: dateStr + ' ' + timeStr };
+  plans.unshift(entry);
+  if (plans.length > 3) plans.pop();
+  localStorage.setItem('fitness_plans', JSON.stringify(plans));
+
+  const btn = document.getElementById('save-btn');
+  btn.textContent = 'נשמר!';
+  btn.style.background = 'var(--accent)';
+  btn.style.color = 'var(--surface)';
+  setTimeout(() => {
+    btn.textContent = 'שמור תכנית';
+    btn.style.background = 'transparent';
+    btn.style.color = 'var(--accent)';
+  }, 2000);
+}
+
+function restorePlan(index) {
+  const plans = getPlans();
+  const d = plans[index];
+  if (!d) return;
+  const f = d.formData;
+  if (f) {
+    document.getElementById('run2000').value = f.run2000 || '';
+    document.getElementById('pullups').value = f.pullups || '';
+    document.getElementById('pushups').value = f.pushups || '';
+    document.getElementById('age').value = f.age || '';
+    document.getElementById('gender').value = f.gender || 'm';
+    document.getElementById('weight').value = f.weight || '';
+    document.getElementById('level').value = f.level || 'intermediate';
+    document.getElementById('injuries').value = f.injuries || '';
+  }
+  document.getElementById('restore-banner').style.display = 'none';
+  generate();
+}
+
+function deletePlan(index) {
+  const plans = getPlans();
+  plans.splice(index, 1);
+  localStorage.setItem('fitness_plans', JSON.stringify(plans));
+  renderBanner();
+}
+
+function renderBanner() {
+  const plans = getPlans();
+  if (!plans.length) {
+    document.getElementById('restore-banner').style.display = 'none';
+    return;
+  }
+  document.getElementById('restore-banner').style.display = 'block';
+  const list = document.getElementById('saved-plans-list');
+  const lvLabels = { beginner: 'מתחיל', intermediate: 'בינוני', advanced: 'מתקדם' };
+  list.innerHTML = plans.map((p, i) => {
+    const f = p.formData || {};
+    const label = p.savedAt + (f.level ? ' · ' + (lvLabels[f.level] || f.level) : '') + (f.run2000 ? ' · 2000מ: ' + f.run2000 : '');
+    return `<div style="display:flex; gap:8px; align-items:center;">
+      <button onclick="restorePlan(${i})" style="flex:1; background:var(--accent); color:var(--surface); border:none; border-radius:8px; font-family:'Heebo',sans-serif; font-size:12px; font-weight:700; padding:9px 10px; cursor:pointer; text-align:right;">${label}</button>
+      <button onclick="deletePlan(${i})" style="background:transparent; color:var(--muted); border:0.5px solid var(--border2); border-radius:8px; font-family:'Heebo',sans-serif; font-size:12px; padding:9px 12px; cursor:pointer;">✕</button>
+    </div>`;
+  }).join('');
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('theme') === 'light') {
+    document.body.classList.add('light');
+    document.getElementById('theme-btn').textContent = '🌙 כהה';
+  }
+  const savedName = localStorage.getItem('user_name');
+  const savedId = localStorage.getItem('user_id');
+  if (savedName && savedId) {
+    document.getElementById('user-name').value = savedName;
+    document.getElementById('user-id').value = savedId;
+    showUserCard(savedName, savedId);
+  }
+  renderBanner();
+});
+</script>
+</body>
+</html>
